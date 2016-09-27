@@ -34,9 +34,9 @@ typedef struct complex_object_t
 
 static int construct(complex_object_t* obj)
 {
-    obj->array = (int*)calloc(10, sizeof(int));
-    REQUIRE_EXIT(obj->array, -1);
     obj->count = 10;
+    obj->array = (int*)calloc(obj->count, sizeof(int));
+    REQUIRE_EXIT(obj->array, -1);
 
     complex_object_t* chain = obj;
     for (int i = 0; i < 20; ++i)
@@ -48,6 +48,8 @@ static int construct(complex_object_t* obj)
         chain->array = (int*)calloc(chain->count, sizeof(int));
         REQUIRE_EXIT(chain->array, -3);
     }
+
+    chain->next = NULL;
 
     return 0;
 }
@@ -70,10 +72,11 @@ TEST_CASE("complex", "[tagged]")
 {
     complex_object_t initial = { 0 };
     REQUIRE(construct(&initial) == 0);
-    SCOPE_ADD(&initial, destruct);
 
     SECTION("empty")
     {
         REQUIRE("nothing to do");
     }
+
+    destruct(&initial);
 }

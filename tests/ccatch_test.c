@@ -41,7 +41,6 @@ TEST_CASE("default scenario")
     const size_t count = 437;
     char* m = malloc(count);
     char* j = malloc(16);
-    SCOPE_ADD(m, free, j, free_mem);
 
     SECTION("not NULL")
     {
@@ -58,4 +57,7 @@ TEST_CASE("default scenario")
     {
         REQUIRE(is_freed);
     }
+
+    free(m);
+    free_mem(j);
 }

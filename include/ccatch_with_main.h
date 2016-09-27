@@ -2,18 +2,25 @@
 #define __CCATCH_WITH_MAIN_H__
 
 #include "ccatch.h"
-#include "ccatch_scope.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #ifndef CCATCH_DATA_SECTION_START
+#if __CYGWIN__
+#define CCATCH_DATA_SECTION_START __data_start__
+#else
 #define CCATCH_DATA_SECTION_START data_start
+#endif
 #endif
 
 #ifndef CCATCH_DATA_SECTION_END
+#if __CYGWIN__
+#define CCATCH_DATA_SECTION_END __data_end__
+#else
 #define CCATCH_DATA_SECTION_END end
+#endif
 #endif
 
 uint32_t ccatch_global_object_g = 0xDEADC0DE;
@@ -83,9 +90,6 @@ static int ccatch_run_tests(ccatch_register_t* tests, size_t tests_count)
 {
     int failed_count = 0;
 
-    ccatch_scope_t scope = { 0 };
-    ccatch_init_scope(&scope);
-
     for (size_t i = 0; i < tests_count; ++i)
     {
         if (strcmp(tests[i].tag, "[hidden]") == 0)
@@ -100,8 +104,7 @@ static int ccatch_run_tests(ccatch_register_t* tests, size_t tests_count)
             count = 0;
             const char* section_name = NULL;
 
-            tests[i].function(index++, &count, &section_name, &scope);
-            ccatch_clear_scope(&scope);
+            tests[i].function(index++, &count, &section_name);
 
             const char* message = "PASSED";
             if (ccatch_test_failed_g)
@@ -117,8 +120,6 @@ static int ccatch_run_tests(ccatch_register_t* tests, size_t tests_count)
         } while (index < count);
     }
 
-    ccatch_deinit_scope(&scope);
-
     return failed_count;
 }
 
@@ -129,7 +130,7 @@ int main(int argc, const char* argv[])
 
     if (tests_count == 0)
     {
-        printf("CCatch: no tests found!\n");
+        printf("CCATCH: no tests found!\n");
     }
     else if (tests_count < 0)
     {

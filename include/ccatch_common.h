@@ -5,15 +5,14 @@
 #error "Do not include this file directly. Use ccatch.h or ccatch_with_main.h instead"
 #endif
 
+#if __STDC_VERSION__ < 199901L
+#error "Only version greater C99 is supported"
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct ccatch_scope_t ccatch_scope_t;
-typedef void (ccatch_scope_destructor_f)(void*);
-
-void ccatch_add_object_to_scope(ccatch_scope_t* scope, void* object, ccatch_scope_destructor_f* destructor);
-
-typedef void (ccatch_function_f)(int, int*, const char**, ccatch_scope_t*);
+typedef void (ccatch_function_f)(int, int*, const char**);
 
 typedef struct ccatch_register_t
 {

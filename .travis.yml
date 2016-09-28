@@ -4,6 +4,11 @@ language: c
 git:
     depth: 3
 
+branches:
+    only:
+    - master
+    - develop
+
 addons:
     apt:
         sources:

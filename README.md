@@ -1,6 +1,8 @@
 # ccatch
 Unit Testing Framework for pure C inspired by [Catch](https://github.com/philsquared/Catch).
 
+Build status [![Build Status](https://travis-ci.org/igsha/ccatch.svg)](https://travis-ci.org/igsha/ccatch)
+
 Long way to test functionality:
 ```sh
 $ mkdir build

@@ -1,0 +1,29 @@
+# vim: sw=4 ts=4
+language: c
+
+git:
+    depth: 3
+
+addons:
+    apt:
+        sources:
+        - george-edison55-precise-backports
+        - ubuntu-toolchain-r-test
+        packages:
+        - cmake
+        - cmake-data
+        - gcc-5
+
+compiler:
+    - gcc-5
+    - clang
+
+before_script:
+    - sed -e 's/VERSION 3.3/VERSION 3.2/g' -e 's/.*COMPILE_LANGUAGE:C.*/-std=c99/g' -i CMakeLists.txt
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Debug ..
+
+script:
+    - cmake --build .
+    - ctest -V

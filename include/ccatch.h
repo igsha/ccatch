@@ -1,9 +1,14 @@
 #ifndef __CCATCH_H__
 #define __CCATCH_H__
 
-#include "ccatch_common.h"
+#if __STDC_VERSION__ < 199901L
+#error "Only version greater C99 is supported"
+#endif
 
+#include <stdbool.h>
 #include <stdio.h>
+
+#define CCATCH_ATTRIBUTE_CONSTRUCTOR __attribute__((constructor))
 
 #define __CONCAT_NAME(PREFIX, LINENO) PREFIX##LINENO
 
@@ -14,16 +19,16 @@
 
 #define __REDIRECT_CALL(FUNC, ...) FUNC(__VA_ARGS__)
 
+typedef void (ccatch_function_f)(int, int*, const char**);
+
+extern bool ccatch_test_failed_g;
+
+void ccatch_add_test_case(const char* name, const char* tag, ccatch_function_f* function);
+
 #define __TEST_CASE(NAME, TAG, FUNCTION) __TEST_CASE2(NAME, TAG, FUNCTION)
 #define __TEST_CASE2(NAME, TAG, FUNCTION) \
     static ccatch_function_f FUNCTION; \
-    ccatch_register_t ccatch_register_##FUNCTION = { \
-        .global_object = &ccatch_global_object_g, \
-        .magic_number = CCATCH_MAGIC_NUMBER, \
-        .name = NAME, \
-        .tag = TAG, \
-        .function = FUNCTION \
-    }; \
+    static void CCATCH_ATTRIBUTE_CONSTRUCTOR FUNCTION##_construct() { ccatch_add_test_case(NAME, TAG, FUNCTION); } \
     static void FUNCTION(int __ccatch_index, int* __ccatch_count, const char** __ccatch_section_name)
 
 #define TEST_CASE(...) __REDIRECT_CALL(__REDIRECT_CALL(__CONCAT_NAME, TEST_CASE_, __COUNT_ARGS(__VA_ARGS__)), __VA_ARGS__)

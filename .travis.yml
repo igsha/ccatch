@@ -27,7 +27,7 @@ before_script:
     - sed -e 's/VERSION 3.3/VERSION 3.2/g' -e 's/.*COMPILE_LANGUAGE:C.*/-std=c99/g' -i CMakeLists.txt
     - mkdir -p build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS=-DCCATCH_VERBOSE=1 ..
 
 script:
     - cmake --build .

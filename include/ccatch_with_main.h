@@ -4,86 +4,52 @@
 #include "ccatch.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
-#ifndef CCATCH_DATA_SECTION_START
-#if __CYGWIN__
-#define CCATCH_DATA_SECTION_START __data_start__
-#else
-#define CCATCH_DATA_SECTION_START data_start
-#endif
-#endif
+typedef struct ccatch_register_t
+{
+    const char* name;
+    const char* tag;
+    ccatch_function_f* function;
+} ccatch_register_t;
 
-#ifndef CCATCH_DATA_SECTION_END
-#if __CYGWIN__
-#define CCATCH_DATA_SECTION_END __data_end__
-#else
-#define CCATCH_DATA_SECTION_END end
-#endif
-#endif
-
-uint32_t ccatch_global_object_g = 0xDEADC0DE;
 bool ccatch_test_failed_g = false;
 
-static int ccatch_compare(const void* left, const void* right)
+static size_t ccatch_test_cases_count = 0;
+static ccatch_register_t* ccatch_registered_test_cases = NULL;
+
+static bool ccatch_irrelevant_state = false;
+
+void ccatch_add_test_case(const char* name, const char* tag, ccatch_function_f* function)
 {
-    const ccatch_register_t* lh = (const ccatch_register_t*)left;
-    const ccatch_register_t* rh = (const ccatch_register_t*)right;
+    if (function == NULL || ccatch_irrelevant_state)
+        return;
 
-    const int same_tag_cmp = strcmp(lh->tag, rh->tag);
+    static size_t ccatch_test_cases_capacity = 0;
 
-    if (same_tag_cmp == 0)
-        return strcmp(lh->name, rh->name);
-
-    return same_tag_cmp;
-}
-
-static int ccatch_find_tests(ccatch_register_t** all_tests_ptr)
-{
-    extern void* CCATCH_DATA_SECTION_START;
-    extern void* CCATCH_DATA_SECTION_END;
-
-    size_t all_tests_count = 0;
-    size_t all_tests_capacity = 10;
-    ccatch_register_t* all_tests = calloc(all_tests_capacity, sizeof(ccatch_register_t));
-    if (!all_tests)
-        return -1;
-
-    const uint32_t** address = (const uint32_t**)&CCATCH_DATA_SECTION_START;
-    const uint32_t** end_address = (const uint32_t**)&CCATCH_DATA_SECTION_END;
-    for (; address < end_address; ++address)
+    if (ccatch_test_cases_count >= ccatch_test_cases_capacity)
     {
-        if (*address != &ccatch_global_object_g)
-            continue;
+        if (ccatch_test_cases_capacity == 0)
+            ccatch_test_cases_capacity = 10;
+        else
+            ccatch_test_cases_capacity *= 2;
 
-        ccatch_register_t* st = (ccatch_register_t*)address;
-        if (st->magic_number != CCATCH_MAGIC_NUMBER)
-            continue;
-
-        if (all_tests_count >= all_tests_capacity)
+        ccatch_register_t* temp = realloc(ccatch_registered_test_cases, ccatch_test_cases_capacity * sizeof(*ccatch_registered_test_cases));
+        if (!temp)
         {
-            all_tests_capacity *= 2;
-            all_tests = realloc(all_tests, all_tests_capacity * sizeof(*all_tests));
-            if (!all_tests)
-            {
-                free(all_tests);
-                return -1;
-            }
+            free(ccatch_registered_test_cases);
+            ccatch_irrelevant_state = true;
         }
-
-        all_tests[all_tests_count++] = *st;
+        ccatch_registered_test_cases = temp;
     }
 
-    if (all_tests_count == 0)
-    {
-        free(all_tests);
-        all_tests = NULL;
-    }
-
-    *all_tests_ptr = all_tests;
-
-    return all_tests_count;
+    ccatch_register_t* test_case = &ccatch_registered_test_cases[ccatch_test_cases_count++];
+    test_case->name = name;
+    test_case->tag = tag;
+    test_case->function = function;
+#if CCATCH_VERBOSE
+    printf("INIT: adds test %s, [%s], %p\n", name, tag, *(void**)&test_case->function);
+#endif
 }
 
 static int ccatch_run_tests(ccatch_register_t* tests, size_t tests_count)
@@ -123,26 +89,36 @@ static int ccatch_run_tests(ccatch_register_t* tests, size_t tests_count)
     return failed_count;
 }
 
+static int ccatch_compare(const void* left, const void* right)
+{
+    const ccatch_register_t* lh = (const ccatch_register_t*)left;
+    const ccatch_register_t* rh = (const ccatch_register_t*)right;
+
+    const int same_tag_cmp = strcmp(lh->tag, rh->tag);
+
+    if (same_tag_cmp == 0)
+        return strcmp(lh->name, rh->name);
+
+    return same_tag_cmp;
+}
+
 int main(int argc, const char* argv[])
 {
-    ccatch_register_t* tests = NULL;
-    int tests_count = ccatch_find_tests(&tests);
-
-    if (tests_count == 0)
+    if (ccatch_test_cases_count == 0)
     {
         printf("CCATCH: no tests found!\n");
+        return 0;
     }
-    else if (tests_count < 0)
+
+    if (ccatch_irrelevant_state)
     {
         printf("ERROR: not enough memory!\n");
         return -1;
     }
-    else
-    {
-        qsort(tests, tests_count, sizeof(*tests), ccatch_compare);
-    }
 
-    return ccatch_run_tests(tests, (size_t)tests_count);
+    qsort(ccatch_registered_test_cases, ccatch_test_cases_count, sizeof(*ccatch_registered_test_cases), ccatch_compare);
+
+    return ccatch_run_tests(ccatch_registered_test_cases, ccatch_test_cases_count);
 }
 
 #endif // __CCATCH_WITH_MAIN_H__

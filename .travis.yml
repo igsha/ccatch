@@ -18,10 +18,28 @@ addons:
         - cmake
         - cmake-data
         - gcc-5
+        - rpm
 
 compiler:
     - gcc-5
     - clang
+
+os:
+    - linux
+    - osx
+
+osx_image: xcode8
+
+matrix:
+    exclude:
+    - os: osx
+      compiler: gcc-5
+
+before_install:
+    - |
+        if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+            brew install --with-default-names gnu-sed
+        fi
 
 before_script:
     - sed -e 's/VERSION 3.3/VERSION 3.2/g' -e 's/.*COMPILE_LANGUAGE:C.*/-std=c99/g' -i CMakeLists.txt
@@ -32,3 +50,4 @@ before_script:
 script:
     - cmake --build .
     - ctest -V
+    - cpack

@@ -1,0 +1,9 @@
+{
+    "name": "ccatch",
+    "version": "0.1.0",
+    "repo": "igsha/ccatch",
+    "description": "Unit test framework for C99",
+    "keywords": ["unittest", "c", "test"],
+    "license": "MIT",
+    "src": ["include/ccatch.h", "include/ccatch_with_main.h"]
+}

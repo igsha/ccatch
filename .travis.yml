@@ -18,7 +18,6 @@ addons:
         - cmake
         - cmake-data
         - gcc-5
-        - rpm
 
 compiler:
     - gcc-5

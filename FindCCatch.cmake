@@ -1,6 +1,0 @@
-find_path(CCATCH_INCLUDE_DIRS NAMES ccatch.h ccatch_with_main.h)
-
-set(CCATCH_FOUND TRUE)
-set(CCATCH_LIBRARIES)
-
-mark_as_advanced(CCATCH_LIBRARIES CCATCH_INCLUDE_DIRS)
